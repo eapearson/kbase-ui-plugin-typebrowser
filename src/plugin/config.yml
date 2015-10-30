@@ -11,16 +11,25 @@ source:
     ## NB: need to quote file names, otherwise 
     modules:
         -
-            module: kb_panel_typeBrowser
-            file: 'panel.js'
+            module: kb_typeBrowser_panel
+            file: panel.js
         -
-            module: kb_widget_typeBrowser
-            file: "widgets/TypeBrowser.js"
+            module: kb_typeBrowser_widget
+            file: widgets/TypeBrowser.js
 install:
+    widgets:
+        -
+            module: kb_typeBrowser_panel
+            id: kb_typeBrowser_panel
+            type: factory
+        -
+            module: kb_typeBrowser_widget
+            id: typebrowser
+            type: factory
     routes:
         -
             path: ['typebrowser']
-            panelFactory: kb_panel_typeBrowser
+            widget: kb_typeBrowser_panel
     menu:
         -
             name: typebrowser
@@ -28,4 +37,3 @@ install:
                 path: typebrowser
                 label: Type Browser
                 icon: beer
-        
