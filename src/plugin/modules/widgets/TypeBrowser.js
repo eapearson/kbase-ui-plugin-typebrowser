@@ -36,12 +36,12 @@ define([
                             // list_all_types above returns a map of module.typeName to the latest version.
                             var types = data[moduleName];
                             Object.keys(types).forEach(function (typeName) {
-                                var type = runtime.service('types').makeType({
+                                var type = runtime.service('type').makeType({
                                     module: moduleName,
                                     name: typeName,
                                     version: types[typeName]
                                 }),
-                                    typeId = runtime.service('types').makeTypeId(type);
+                                    typeId = runtime.service('type').makeTypeId(type);
                                 //rows.push([
                                 //    moduleName, typeName, a({href: '#spec/type/' + typeId}, types[typeName])
                                 //]);
@@ -65,11 +65,11 @@ define([
                             var typeRecord = typeRecords[typeId];
                             return [
                                 typeRecord.type.module, typeRecord.type.name,
-                                runtime.service('types').getIcon({
+                                runtime.service('type').getIcon({
                                     type: typeRecord.type,
                                     size: 'medium'
                                 }).html,
-                                a({href: '#spec/type/' + typeId}, runtime.service('types').makeVersion(typeRecord.type)),
+                                a({href: '#spec/type/' + typeId}, runtime.service('type').makeVersion(typeRecord.type)),
                                 typeRecord.info.using_type_defs.map(function (typeId) {
                                     return a({href: '#spec/type/' + typeId}, typeId);
                                 }).join('<br>'),
