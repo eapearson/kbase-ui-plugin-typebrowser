@@ -14,45 +14,57 @@ define([
 ], function ($, Promise, html, Workspace) {
     'use strict';
 
+    function makeErrorPanel(err) {
+        console.log('ERROR');
+        console.log(err);
+        try {
+            return html.makeObjectTable(err, ['type', 'title', 'reason', 'message', 'suggestion']);
+        } catch (ex) {
+            console.log(ex);
+            return 'An unknown error was encountered with this widget, please check the console.';
+
+        }
+
+    }
+
     function widget(config) {
         var mount, container, runtime = config.runtime,
             tableId;
 
-        function renderer() {
+        function render() {
             return new Promise(function (resolve, reject) {
                 var workspace = new Workspace(runtime.getConfig('services.workspace.url'), {
                     token: runtime.service('session').getAuthToken()
                 }),
                     a = html.tag('a');
-                Promise.resolve(workspace.list_all_types({
+                workspace.list_all_types({
                     with_empty_modules: 1
-                }))
+                })
                     .then(function (data) {
-                        // Flatt out the types.
-                        // var rows = [];
+                        // Flatten out the types.
                         var typeRecords = {},
                             getinfo = [];
                         Object.keys(data).forEach(function (moduleName) {
                             // list_all_types above returns a map of module.typeName to the latest version.
-                            var types = data[moduleName];
+                            var types = data[moduleName],
+                                typeService = runtime.service('type');
                             Object.keys(types).forEach(function (typeName) {
-                                var type = runtime.service('type').makeType({
-                                    module: moduleName,
-                                    name: typeName,
-                                    version: types[typeName]
-                                }),
-                                    typeId = runtime.service('type').makeTypeId(type);
-                                //rows.push([
-                                //    moduleName, typeName, a({href: '#spec/type/' + typeId}, types[typeName])
-                                //]);
-                                // Each type is put into a map simply to create a set.
+                                var typeSpec = {
+                                        module: moduleName,
+                                        name: typeName,
+                                        version: types[typeName]
+                                    },
+                                    type = typeService.makeType(typeSpec),
+                                    typeId = typeService.makeTypeId(type);
                                 typeRecords[typeId] = {
                                     type: type
                                 };
-                                getinfo.push(Promise.resolve(workspace.get_type_info(typeId)));
+
+                                //if (typeService.hasType(typeSpec)) {
+                                    getinfo.push(Promise.resolve(workspace.get_type_info(typeId)));
+                                //}
                             });
                         });
-
                         return [typeRecords, Promise.all(getinfo)];
                     })
                     .spread(function (typeRecords, results) {
@@ -69,21 +81,35 @@ define([
                                     type: typeRecord.type,
                                     size: 'medium'
                                 }).html,
+                                (function () {
+                                    var viewer = runtime.service('type').getViewer({
+                                        type: typeRecord.type
+                                    });
+                                    if (viewer) {
+                                        return 'Yes';
+                                    }
+                                    return '';
+                                }()),
                                 a({href: '#spec/type/' + typeId}, runtime.service('type').makeVersion(typeRecord.type)),
+                                
+                                
                                 typeRecord.info.using_type_defs.map(function (typeId) {
                                     return a({href: '#spec/type/' + typeId}, typeId);
                                 }).join('<br>'),
+                                
                                 typeRecord.info.used_type_defs.map(function (typeId) {
                                     return a({href: '#spec/type/' + typeId}, typeId);
                                 }).join('<br>'),
+                                
                                 typeRecord.info.using_func_defs.map(function (functionId) {
                                     return a({href: '#spec/functions/' + functionId}, functionId);
                                 }).join('<br>'),
+                                
                                 a({href: '#databrowser?type=' + typeId}, 'browse')
 
                             ];
                         }),
-                            cols = ['Module', 'Type', 'Icon', 'Version', 'Using types', 'Used by types', 'Used by functions', 'Objects'],
+                            cols = ['Module', 'Type', 'Icon', 'Viewer?', 'Version', 'Using types', 'Used by types', 'Used by functions', 'Objects'],
                             result = html.makeTable({columns: cols, rows: rows, id: tableId, class: 'table table-striped'});
                         resolve({
                             title: 'Type Browser',
@@ -95,8 +121,9 @@ define([
                         console.log('ERROR getting type info');
                         console.log(err);
                         reject({
-                            title: 'Error',
-                            content: 'Error getting type info'
+                            type: 'UnkownError',
+                            reason: 'Unknown',
+                            message: 'Error getting type info'
                         });
                     });
             });
@@ -120,40 +147,30 @@ define([
 
         // API
         function attach(node) {
-            return new Promise(function (resolve, reject) {
+            return Promise.try(function () {
                 mount = node;
                 container = document.createElement('div');
                 mount.appendChild(container);
-
-                container.innerHTML = 'Loading KBase Types from the Workspace Service ...' + html.loading();
-
-                renderer()
-                    .then(function (rendered) {
-                        container.innerHTML = rendered.content;
-                        runtime.send('ui', 'setTitle', rendered.title);
-
-                        attachDatatable();
-                        // create widgets.
-                        // no children for now (see kbaseSimplePanel for how to do this)
-                        resolve();
-                    })
-                    .catch(function (err) {
-                        if (err.title) {
-                            container.innerHTML = err.content;
-                            runtime.send('ui', 'setTitle', err.title);
-                        }
-                        console.log('ERROR rendering widget');
-                        console.log(err);
-                        reject(err);
-                    })
-                    .done();
+                container.innerHTML = 'Loading all KBase Types from the Workspace Service ...' + html.loading();
             });
         }
 
-        function start() {
+        function run() {
+            return render()
+                .then(function (rendered) {
+                    console.log('OK?');
+                    container.innerHTML = rendered.content;
+                    runtime.send('ui', 'setTitle', rendered.title);
+                    attachDatatable();
+                })
+                .catch(function (err) {
+                    console.log('ERR?');
+                    container.innerHTML = makeErrorPanel(err);
+                    // console.log(err);
+                    //  container.innerHTML = 'Error rendering this widget, check the console.';
+                });
         }
-        function stop() {
-        }
+
         function detach() {
             mount.removeChild(container);
             container.innerHTML = '';
@@ -161,8 +178,7 @@ define([
         }
         return {
             attach: attach,
-            start: start,
-            stop: stop,
+            run: run,
             detach: detach
         };
     }

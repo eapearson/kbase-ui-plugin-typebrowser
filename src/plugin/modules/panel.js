@@ -46,7 +46,7 @@ define([
                 });
             }
             function attach(node) {
-                return new Promise(function (resolve, reject) {
+                return Promise.try(function () {
                     mount = node;
                     container = DOM.createElement('div');
                     mount.appendChild(container);
@@ -54,13 +54,6 @@ define([
                     runtime.send('ui', 'setTitle', rendered.title);
                     return widgetSet.attach(node);
                 });
-            }
-            function detach() {
-                return Promise.try(function () {
-                    mount.removeChild(container);
-                    container = null;
-                    return widgetSet.detach();
-                })
             }
             function start(params) {
                 return widgetSet.start(params);
@@ -70,6 +63,13 @@ define([
             }
             function stop() {
                 return widgetSet.stop();
+            }
+            function detach() {
+                return Promise.try(function () {
+                    mount.removeChild(container);
+                    container = null;
+                    return widgetSet.detach();
+                })
             }
             function destroy() {
                 return widgetSet.destroy();
