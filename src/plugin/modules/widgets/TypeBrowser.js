@@ -9,7 +9,7 @@ define([
     'jquery',
     'bluebird',
     'kb/common/html',
-    'kb_service_workspace',
+    'kb/service/client/workspace',
     'datatables_bootstrap'
 ], function ($, Promise, html, Workspace) {
     'use strict';
