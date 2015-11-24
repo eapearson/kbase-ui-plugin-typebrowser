@@ -8,7 +8,7 @@
 define([
     'jquery',
     'bluebird',
-    'kb_common_html',
+    'kb/common/html',
     'kb_service_workspace',
     'datatables_bootstrap'
 ], function ($, Promise, html, Workspace) {
@@ -158,7 +158,6 @@ define([
         function run() {
             return render()
                 .then(function (rendered) {
-                    console.log('OK?');
                     container.innerHTML = rendered.content;
                     runtime.send('ui', 'setTitle', rendered.title);
                     attachDatatable();
