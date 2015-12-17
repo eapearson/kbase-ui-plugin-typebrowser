@@ -61,7 +61,11 @@ define([
                                 };
 
                                 //if (typeService.hasType(typeSpec)) {
-                                    getinfo.push(Promise.resolve(workspace.get_type_info(typeId)));
+                                // this protects the ensuing "all" from bailing if any
+                                // workspace call bails; it makes this a little more complex
+                                // because we have to inspect the results with the reflection api...
+                                
+                                getinfo.push(workspace.get_type_info(typeId).reflect());
                                 //}
                             });
                         });
@@ -69,45 +73,75 @@ define([
                     })
                     .spread(function (typeRecords, results) {
                         results.forEach(function (result) {
-                            var typeId = result.type_def;
-                            typeRecords[typeId].info = result;
+                            if (result.isFulfilled()) {
+                                var typeInfo = result.value(),
+                                    typeId = typeInfo.type_def;
+                                typeRecords[typeId].info = typeInfo;
+                            } else {
+                                console.error('ERROR fetching type info');
+                                console.error()
+                                console.error(result.reason());
+                            }
                         });
                         tableId = html.genId();
                         var rows = Object.keys(typeRecords).map(function (typeId) {
                             var typeRecord = typeRecords[typeId];
-                            return [
-                                typeRecord.type.module, typeRecord.type.name,
-                                runtime.service('type').getIcon({
-                                    type: typeRecord.type,
-                                    size: 'medium'
-                                }).html,
-                                (function () {
-                                    var viewer = runtime.service('type').getViewer({
-                                        type: typeRecord.type
-                                    });
-                                    if (viewer) {
-                                        return 'Yes';
-                                    }
-                                    return '';
-                                }()),
-                                a({href: '#spec/type/' + typeId}, runtime.service('type').makeVersion(typeRecord.type)),
-                                
-                                
-                                typeRecord.info.using_type_defs.map(function (typeId) {
-                                    return a({href: '#spec/type/' + typeId}, typeId);
-                                }).join('<br>'),
-                                
-                                typeRecord.info.used_type_defs.map(function (typeId) {
-                                    return a({href: '#spec/type/' + typeId}, typeId);
-                                }).join('<br>'),
-                                
-                                typeRecord.info.using_func_defs.map(function (functionId) {
-                                    return a({href: '#spec/functions/' + functionId}, functionId);
-                                }).join('<br>'),
-                                
-                                a({href: '#databrowser?type=' + typeId}, 'browse')
+                            if (typeRecord.info) {
+                                return [
+                                    typeRecord.type.module, typeRecord.type.name,
+                                    runtime.service('type').getIcon({
+                                        type: typeRecord.type,
+                                        size: 'medium'
+                                    }).html,
+                                    (function () {
+                                        var viewer = runtime.service('type').getViewer({
+                                            type: typeRecord.type
+                                        });
+                                        if (viewer) {
+                                            return 'Yes';
+                                        }
+                                        return '';
+                                    }()),
+                                    a({href: '#spec/type/' + typeId}, runtime.service('type').makeVersion(typeRecord.type)),
 
-                            ];
+
+                                    typeRecord.info.using_type_defs.map(function (typeId) {
+                                        return a({href: '#spec/type/' + typeId}, typeId);
+                                    }).join('<br>'),
+
+                                    typeRecord.info.used_type_defs.map(function (typeId) {
+                                        return a({href: '#spec/type/' + typeId}, typeId);
+                                    }).join('<br>'),
+
+                                    typeRecord.info.using_func_defs.map(function (functionId) {
+                                        return a({href: '#spec/functions/' + functionId}, functionId);
+                                    }).join('<br>'),
+
+                                    a({href: '#databrowser?type=' + typeId}, 'browse')
+                                ];
+                            } else {
+                                return [
+                                    typeRecord.type.module, typeRecord.type.name,
+                                    runtime.service('type').getIcon({
+                                        type: typeRecord.type,
+                                        size: 'medium'
+                                    }).html,
+                                    (function () {
+                                        var viewer = runtime.service('type').getViewer({
+                                            type: typeRecord.type
+                                        });
+                                        if (viewer) {
+                                            return 'Yes';
+                                        }
+                                        return '';
+                                    }()),
+                                    a({href: '#spec/type/' + typeId}, runtime.service('type').makeVersion(typeRecord.type)),
+
+                                    'n/a', 'n/a', 'n/a',
+
+                                    a({href: '#databrowser?type=' + typeId}, 'browse')
+                                ];
+                            }
                         }),
                             cols = ['Module', 'Type', 'Icon', 'Viewer?', 'Version', 'Using types', 'Used by types', 'Used by functions', 'Objects'],
                             result = html.makeTable({columns: cols, rows: rows, id: tableId, class: 'table table-striped'});
