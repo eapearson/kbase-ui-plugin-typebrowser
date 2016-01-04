@@ -1,0 +1,30 @@
+{
+    "name": "kbase-ui-plugin-typebrowser",
+    "description": "A plugin for listing, searching, and browsing KBase types",
+    "keywords": ["kbase", "widget"],
+    "author": [
+        "kbase"
+    ],
+    "moduleType": "kbase-ui-plugin",
+    "main": "src/plugin/config.yml",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/kbase/kbase-ui-plugin-typebrowser"
+    },
+    "devDependencies": {
+        "jquery": "^2.1.0",
+        "bluebird": "^3.0.0",
+        "kbase-common-js": "^0.1.0",
+        "kbase-ui-widget": "^0.1.0",
+        "bootstrap": "^3.3.0",
+        "datatables": "^1.10.9",
+        "datatables-bootstrap3-plugin": "^0.4.0"
+
+    },
+    "dependencies": {
+    },
+    "ignore": [
+        ".gitignore"
+    ],
+    "license": "SEE LICENSE IN LICENSE.md"
+}
