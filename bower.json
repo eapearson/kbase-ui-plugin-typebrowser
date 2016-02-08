@@ -14,8 +14,8 @@
     "devDependencies": {
         "jquery": "^2.1.0",
         "bluebird": "^3.0.0",
-        "kbase-common-js": "^0.1.0",
-        "kbase-ui-widget": "^0.1.0",
+        "kbase-common-js": "^1.0.0",
+        "kbase-ui-widget": "^1.0.0",
         "bootstrap": "^3.3.0",
         "datatables": "^1.10.9",
         "datatables-bootstrap3-plugin": "^0.4.0"
