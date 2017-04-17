@@ -16,7 +16,7 @@ define([
             var panel = div({ class: 'kbase-view kbase-typebrowser-view container-fluid', 'data-kbase-view': 'typebrowser' }, [
                 div({ class: 'row' }, [
                     div({ class: 'col-sm-12' }, [
-                        panel('Type Browser',
+                        html.panel('Type Browser',
                             div({ id: widgetSet.addWidget('typebrowser') })
                         )
                     ])
